@@ -9,12 +9,12 @@ Create a new TYPO3 Content Block in the current project's sitepackage.
 
 ## Before you start
 
-1. Read the developer guidelines FIRST (mandatory):
-   - `/Users/oliverthiele/PhpstormProjects/developer-guidelines/guidelines/typo3/content-blocks.md` — **primary reference for all CB conventions**
-   - `/Users/oliverthiele/PhpstormProjects/developer-guidelines/guidelines/typo3/integrator.md`
-   - `/Users/oliverthiele/PhpstormProjects/developer-guidelines/guidelines/xliff/typo3.md` — labels.xlf, SiteSet labels
-   - `/Users/oliverthiele/PhpstormProjects/developer-guidelines/guidelines/xliff/keys.md` — key naming
-   - `/Users/oliverthiele/PhpstormProjects/developer-guidelines/guidelines/scss.md`
+1. Read the developer guidelines FIRST (mandatory). Paths are relative to this skill's own directory (`developer-guidelines/skills/create-content-block/`):
+   - `../../guidelines/typo3/content-blocks.md` — **primary reference for all CB conventions**
+   - `../../guidelines/typo3/integrator.md`
+   - `../../guidelines/xliff/typo3.md` — labels.xlf, SiteSet labels
+   - `../../guidelines/xliff/keys.md` — key naming
+   - `../../guidelines/scss.md`
 2. Identify the sitepackage: look for a `ContentBlocks/` directory under `packages/*/`
 3. Study existing Content Blocks in that directory for project-specific patterns
 
