@@ -4,7 +4,7 @@ scope: testing
 applies_to:
   - "**/*.spec.ts"
   - "**/playwright.config.*"
-see_also: ["testing.md"]
+see_also: ["testing.md", "typo3/integrator.md"]
 ---
 # Playwright Guidelines
 
@@ -214,6 +214,79 @@ Link every regression test to its origin in the file-level comment block:
 
 This makes it possible to trace why a test exists and whether it can be removed
 if the underlying code is later refactored.
+
+---
+
+## Reading a run's result
+
+**Never truncate the output positionally.** `tail -n` on a Playwright run is the
+one shortcut that reliably produces a wrong conclusion: the line reporter prints
+the *titles of the failed tests* after the counts, so a truncated view shows a
+list of test names and the number of passes, while the `failed` line scrolls
+away. A red run then reads exactly like a green one.
+
+Grep for the summary instead:
+
+```bash
+npx playwright test 2>&1 | grep -E '^\s+[0-9]+ (failed|passed|skipped|flaky)'
+```
+
+A run is green only when **no `failed` line appears**. `N passed` on its own
+proves nothing — it is equally consistent with a run in which a dozen tests
+failed.
+
+The same applies to reading a failure in detail: filter for what carries the
+information rather than cutting at a position.
+
+```bash
+npx playwright test --reporter=list 2>&1 | grep '✘'   # which tests failed
+npx playwright test 2>&1 | grep -E '^\s+Error:'      # why they failed
+```
+
+This matters most when a test run is being used as evidence — "no regression
+from this change" is a claim, and a truncated result does not support it.
+
+---
+
+## Testing mail — ask before sending
+
+A form is worth an end-to-end test, and a form usually sends mail. Whenever a
+test triggers that path, **something must be capturing the mail before the test
+runs** — on a staging system cloned from live, the recipients in that form are
+real people.
+
+The rule is not which tool: Playwright, Cypress or anything else that can hold
+the browser and read an API will do. The rule is the order.
+
+1. Ask whether mail is being captured.
+2. Skip the test if it is not.
+3. Only then submit the form.
+
+Never invert 1 and 3. A test that submits first and checks afterwards has
+already sent the mail by the time it finds out.
+
+That check has to be answerable **while capturing is off** — which is the part a
+catcher that merely intercepts cannot do, because a route that only replies when
+active can never report "off" or "on but not wired up".
+
+**Tooling:** [`oliverthiele/ot-mailcatcher`](https://packagist.org/packages/oliverthiele/ot-mailcatcher)
+— captures each mail as its own file, answers a token-protected status route in
+both states, and can deliver a wrongly captured mail to its real recipients
+afterwards. It is a TYPO3 extension, so it needs no additional service,
+container or open port.
+
+```ts
+const response = await request.get('/_mailcatcher/api/status', {
+    headers: { 'X-Mailcatcher-Token': process.env.MAILCATCHER_API_TOKEN ?? '' },
+});
+// 404 means no token configured, or the wrong one — either way, do not send.
+if (!response.ok()) test.skip();
+```
+
+One mail per file matters more than it sounds: a form finisher that sends a
+receiver notification *and* a sender confirmation produces two mails in one
+request, and a catcher appending both to a single `mbox` file leaves no reliable
+boundary to tell them apart again.
 
 ---
 

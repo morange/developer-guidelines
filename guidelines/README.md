@@ -166,12 +166,14 @@ ones that fill a gap with a plausible-looking guess instead of leaving it open.
 |----------------------------------------------------|----------------------------------------------------------------------------|
 | [typo3/](typo3/README.md)                          | TYPO3 topic root — index and version model                                 |
 | [typo3/integrator.md](typo3/integrator.md)         | TypoScript, SiteSets, CE wizard, backend configuration                     |
-| [typo3/developer.md](typo3/developer.md)           | PHP, TCA, Fluid, Doctrine DBAL, views                                      |
+| [typo3/developer.md](typo3/developer.md)           | PHP, TCA, Doctrine DBAL, views                                              |
 | [typo3/content-blocks.md](typo3/content-blocks.md) | Content Block structure, portable assets, two-layer CSS, config.yaml       |
 | [typo3/sitekit.md](typo3/sitekit.md)               | SiteKit layer model, template path abstraction (SiteKit projects only)     |
 | [typo3/practices/](typo3/practices/README.md)      | decision guides: which approach, and when deliberately not                 |
 | [typo3/versions.md](typo3/versions.md)             | which rule applies to which TYPO3 version                                  |
 | [typo3/changelog-index/](typo3/changelog-index/)   | every core changelog entry — grep only, never read whole                   |
+| [fluid/](fluid/README.md)                          | Fluid engine: syntax, ViewHelper arguments, template resolution            |
+| [fluid/typo3.md](fluid/typo3.md)                   | Fluid in TYPO3: core ViewHelpers, backend modules, RTE output              |
 | [xliff/](xliff/README.md)                          | XLIFF 1.2 / 2.0 file format, attributes, ICU message format                |
 | [xliff/keys.md](xliff/keys.md)                     | Key naming conventions, key lifecycle                                      |
 | [xliff/typo3.md](xliff/typo3.md)                   | LLL references, SiteSet labels.xlf, enum label localization                |
@@ -188,6 +190,27 @@ ones that fill a gap with a plausible-looking guess instead of leaving it open.
 Each file starts with YAML frontmatter (`applies_to`, `typo3`, `see_also`). The
 `applies_to` globs say which files a guideline governs; the table above is
 derived from that metadata.
+
+## Own tooling
+
+Published packages that support or enforce rules in these guidelines. Where a
+rule can be checked automatically, its section carries a `**Tooling:**` line
+next to `**Validity:**` — reach for the tool instead of doing the work by hand.
+
+| Package | Covers | Guideline |
+|---|---|---|
+| [`oliverthiele/typo3-fluid-linter`](https://packagist.org/packages/oliverthiele/typo3-fluid-linter) | Fluid templates: encoding artifacts, namespace and XML issues, deprecated ViewHelpers, Fluid 5 breaking changes — several rules auto-fixable with `--fix`; no TYPO3 installation required | [fluid/](fluid/README.md) |
+| [`oliverthiele/ot-mailcatcher`](https://packagist.org/packages/oliverthiele/ot-mailcatcher) | captures outgoing mail as files instead of sending it; token-protected HTTP API so an E2E test can assert on a mail — or ask first whether it is being captured at all | [playwright.md](playwright.md) |
+
+The core ships a Fluid check of its own, `typo3 fluid:analyze` (v14.2+, alias
+`fluid:analyse`). It is AST-based and finds real parse errors, but needs a
+bootable instance and only reads `*.fluid.*` files. Where both are available,
+they answer different questions — run both.
+
+**The rules never depend on a tool being present.** A project that uses none of
+these still follows them; a `**Tooling:**` line says a check *can* be automated,
+never that the rule exists because the tool does. Every rule states its own
+reason and holds without it.
 
 ## What belongs in here
 
