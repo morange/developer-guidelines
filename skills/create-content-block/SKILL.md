@@ -9,12 +9,13 @@ Create a new TYPO3 Content Block in the current project's sitepackage.
 
 ## Before you start
 
-1. Read the developer guidelines FIRST (mandatory):
-   - `/Users/oliverthiele/PhpstormProjects/developer-guidelines/guidelines/typo3/content-blocks.md` — **primary reference for all CB conventions**
-   - `/Users/oliverthiele/PhpstormProjects/developer-guidelines/guidelines/typo3/integrator.md`
-   - `/Users/oliverthiele/PhpstormProjects/developer-guidelines/guidelines/xliff/typo3.md` — labels.xlf, SiteSet labels
-   - `/Users/oliverthiele/PhpstormProjects/developer-guidelines/guidelines/xliff/keys.md` — key naming
-   - `/Users/oliverthiele/PhpstormProjects/developer-guidelines/guidelines/scss.md`
+1. Read the developer guidelines FIRST (mandatory). Paths are relative to the root of the
+   `developer-guidelines` repository, usually `../developer-guidelines/` next to the project:
+   - `guidelines/typo3/content-blocks.md` — **primary reference for all CB conventions**
+   - `guidelines/typo3/integrator.md`
+   - `guidelines/xliff/typo3.md` — labels.xlf, SiteSet labels
+   - `guidelines/xliff/keys.md` — key naming
+   - `guidelines/scss.md`
 2. Identify the sitepackage: look for a `ContentBlocks/` directory under `packages/*/`
 3. Study existing Content Blocks in that directory for project-specific patterns
 
@@ -38,25 +39,25 @@ Ask the user (only what's not already clear from context):
 
 ## Icon Selector (ot-iconselector)
 
-When `ot_iconselector` is installed, `icon_identifier` fields should use the visual icon picker.
+When `ot_iconselector` is installed and the block has an `icon_identifier` field (top-level or in a Collection), it should use the visual icon picker via a TCA override that sets `renderType: otIconSelector`. Read `references/icon-selector.md` in this skill's directory for the override files and their naming.
 
-**Top-level fields** (`useExistingField: true`): These inherit the full TCA config from `tt_content.icon_identifier`, including any `renderType` set by a TCA override. Ensure the sitepackage has a TCA override on `tt_content` that applies `renderType: otIconSelector`. Only set `renderType` — never change `type` (TYPO3 derives DB schema from `type`).
+## Gotchas
 
-```php
-// Configuration/TCA/Overrides/tt_content.php
-if (ExtensionManagementUtility::isLoaded('ot_iconselector')) {
-    $GLOBALS['TCA']['tt_content']['columns']['icon_identifier']['config']['renderType'] = 'otIconSelector';
-}
-```
+Add to this list whenever a Content Block run goes wrong in a new way.
 
-**Collection child fields**: `useExistingField: true` is not available inside Collections (separate child table). Create a TCA override file named after the child table (naming pattern: `cb_{blockname}_{field}`):
-
-```php
-// Configuration/TCA/Overrides/cb_{blockname}_{field}.php
-if (ExtensionManagementUtility::isLoaded('ot_iconselector')) {
-    $GLOBALS['TCA']['cb_{blockname}_{field}']['columns']['icon_identifier']['config']['renderType'] = 'otIconSelector';
-}
-```
+- **Schema needs two runs.** After creating columns: `updateschema "*.add"`, `cache:flush`,
+  then `updateschema "*.add"` again, and the second run must report nothing left to add.
+  A new Collection can fail on the first run (see *A new Collection on deploy* in
+  `content-blocks.md`).
+- **No `fe-build`.** The file watcher handles SCSS and JS changes; running a build on top
+  is wasted work.
+- **`useExistingField: true` does not work inside Collections.** Child fields live in a
+  separate table, so they need a TCA override named after that table
+  (`cb_{blockname}_{field}.php`).
+- **Set only `renderType`, never `type`.** TYPO3 derives the database schema from `type`;
+  changing it alters the column.
+- **Reuse before creating a field, and name a new one for its meaning**, not for the block.
+- **No hardcoded `iconStyle`** with the `i:icon` ViewHelper; the SiteSet default applies.
 
 ## After creation
 

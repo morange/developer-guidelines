@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `skills/create-content-block` — a *Gotchas* section collects the failure points
+  that were scattered through the text: two schema runs, no `fe-build`,
+  `useExistingField` inside Collections, `renderType` instead of `type`. The Icon
+  Selector override moved to `references/icon-selector.md`, which the skill links
+  to. The guideline paths are relative to the repository root instead of one
+  machine's home directory
+
 ### Fixed
 
 - `guidelines/typo3/deployment.md` → *Upgrade wizards* described the
