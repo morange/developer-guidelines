@@ -9,7 +9,8 @@ Always prefer minimal, targeted changes.
 
 - Do not refactor existing structures unless explicitly required
 - Do not rename variables, methods, or files without necessity
-- Preserve existing comments and architecture
+- Preserve existing comments and architecture — and keep a comment true when
+  the code it describes changes, see [Comments](#comments--where-knowledge-belongs)
 - Extend instead of rewriting
 
 ## Setup
@@ -52,6 +53,28 @@ a guideline nor the project's own `Guidelines/` folder covers:
    core's own usages of a class settle most API questions in a minute. Prefer it
    over the published documentation, which defaults to another version, and over
    memory, which has no version at all.
+
+   When the code cannot answer it — what a TypoScript property or a TCA option
+   does, how a concept is meant to work — read the official documentation on
+   docs.typo3.org, and read it the way that site publishes it for tools:
+   - **The project's version in the address** — `14.3`, `13.4` — for how
+     something works. The next major's documentation answers a different
+     question, whether it is still the way to do it — see
+     [New code looks one major ahead](#new-code-looks-one-major-ahead). `main`
+     documents an unreleased major and is a provisional preview only
+   - **Markdown, not HTML** — the same address with `.md` instead of `.html`:
+     the complete page without navigation, at a fraction of the size. A manual
+     not rendered since the change answers 404; only then fall back to the HTML
+   - **Find the page through the manual's indexes** instead of guessing a path:
+     its `llms.txt` lists every page and index, `toc.json` is the table of
+     contents, `confvals.json` lists every documented option with type and
+     default. When the manual itself is unknown, start at
+     [`docs.typo3.org/llms.txt`](https://docs.typo3.org/llms.txt)
+   - **Never the reStructuredText sources** (`_sources/`). They miss whatever is
+     pulled in while the manual is built: an included file, or the argument
+     list of a ViewHelper, which is generated from data that lives elsewhere.
+     An incomplete source does not look incomplete — the rendered Markdown is
+     the finished page.
 4. **Read the surrounding project code.** The binding pattern for anything
    project-specific. It can be outdated — check it against steps 2 and 3 before
    copying it.
@@ -73,36 +96,41 @@ is deliberately small. If the gap keeps recurring, propose a rule for it.
 This holds for humans too, but it is written for AI assistants, which are the
 ones that fill a gap with a plausible-looking guess instead of leaving it open.
 
+## New code looks one major ahead
+
+The installed source says what works today. It does not say whether the code
+written today survives the next upgrade. For **new** code, among the approaches
+that work on the installed version, pick the one the next major does not break:
+
+- **Grep the next released major** — `v14.tsv` for a v13 project — for
+  `Deprecation` and `Breaking` entries on every API the new code uses. That
+  release is final, so a hit is binding: code that uses a deprecated API today
+  has to be touched again at the upgrade.
+- **Grep the unreleased major as well** — `v15.tsv`, marked `provisional`. It
+  breaks a tie between options that are otherwise equal; it is never a reason
+  to rewrite working code, and never a `**Validity:**` line without that caveat.
+- **A practice guide decides the recommended approach**, where one exists —
+  [typo3/practices/](typo3/practices/README.md). Which way is *better* is not
+  in the changelog; a deprecation only says which way is ending.
+- **Read the next major's documentation for the direction** — `14.3` for a
+  v13 project, as Markdown like any other page. It shows how the core expects
+  the thing to be done once the project is upgraded.
+- **The code must still run on the installed version.** Never write against an
+  API that the project's `vendor/` does not have. When the forward-safe API only
+  exists in the next major, use the installed one and leave a comment that names
+  the changelog entry, with its title, so the upgrade finds it.
+
+Existing code is not rewritten for this. It is updated when it is touched for
+another reason, or at the upgrade itself.
+
 ## Guidelines
 
-| File                                               | Topics                                                                     |
-|----------------------------------------------------|----------------------------------------------------------------------------|
-| [typo3/](typo3/README.md)                          | TYPO3 topic root — index and version model                                 |
-| [typo3/integrator.md](typo3/integrator.md)         | TypoScript, SiteSets, CE wizard, backend configuration                     |
-| [typo3/developer.md](typo3/developer.md)           | PHP, TCA, Doctrine DBAL, views                                              |
-| [typo3/content-blocks.md](typo3/content-blocks.md) | Content Block structure, portable assets, two-layer CSS, config.yaml       |
-| [typo3/sitekit.md](typo3/sitekit.md)               | SiteKit layer model, template path abstraction (SiteKit projects only)     |
-| [typo3/practices/](typo3/practices/README.md)      | decision guides: which approach, and when deliberately not                 |
-| [typo3/versions.md](typo3/versions.md)             | which rule applies to which TYPO3 version                                  |
-| [typo3/changelog-index/](typo3/changelog-index/)   | every core changelog entry — grep only, never read whole                   |
-| [fluid/](fluid/README.md)                          | Fluid engine: syntax, ViewHelper arguments, template resolution            |
-| [fluid/typo3.md](fluid/typo3.md)                   | Fluid in TYPO3: core ViewHelpers, backend modules, RTE output              |
-| [xliff/](xliff/README.md)                          | XLIFF 1.2 / 2.0 file format, attributes, ICU message format                |
-| [xliff/keys.md](xliff/keys.md)                     | Key naming conventions, key lifecycle                                      |
-| [xliff/typo3.md](xliff/typo3.md)                   | LLL references, SiteSet labels.xlf, enum label localization                |
-| [php.md](php.md)                                   | Naming conventions, PHPStan, PHP CS Fixer, type safety                     |
-| [testing.md](testing.md)                           | Quality checks, execution order, PHPUnit, Playwright                       |
-| [git.md](git.md)                                   | Branching workflow, commit messages, release process                       |
-| [shell.md](shell.md)                               | Bash 3.2 vs 5.x, set -u array guards, running scripts via ddev exec        |
-| [scss.md](scss.md)                                 | Bootstrap-first, CUBE CSS, prefix system, custom properties, state classes |
-| [javascript.md](javascript.md)                     | data-js hooks, Bootstrap JS, ID conventions, framework choice              |
-| [vue.md](vue.md)                                   | Component syntax, script setup, state management, when to use Vue          |
-| [playwright.md](playwright.md)                     | Playwright test patterns, visual regression, functional tests, helpers     |
-| [documentation.md](documentation.md)               | README.md and CHANGELOG.md structure for Packagist extensions              |
+Which file covers which work area is listed once, in the
+[routing table in `AGENTS.md`](../AGENTS.md#routing). It is not repeated here,
+so that a new file cannot be added to one list and missed in another.
 
 Each file starts with YAML frontmatter (`applies_to`, `typo3`, `see_also`). The
-`applies_to` globs say which files a guideline governs; the table above is
-derived from that metadata.
+`applies_to` globs say which files a guideline governs.
 
 ## Own tooling
 
@@ -134,6 +162,60 @@ that was removed stays as long as the wrong pattern is still being produced:
 support ends on a schedule, training data does not. `StandaloneView` is the
 example — gone since v14, and still the first thing a model reaches for.
 
+## How a rule is backed — the `**Basis:**` line
+
+A rule traced through the core source and a rule taken from one project's
+upgrade read the same on the page, and a reader applies both with the same
+confidence. The `**Basis:**` line tells them apart. It sits directly under a
+section's heading, next to `**Validity:**` and `**Tooling:**`:
+
+```markdown
+### `addPlugin()` takes two arguments
+
+**Validity:** v14 · [#107047](…)
+**Basis:** verified against TYPO3 14.3.7
+```
+
+Three levels, strongest first:
+
+| Level | Meaning | Written as |
+|---|---|---|
+| **verified** | traced in the source, or reproduced | `verified against TYPO3 14.3.7` — always with the package and the exact version checked |
+| **documented** | backed by a changelog entry or official documentation, not traced further | `documented` — the entry is linked in the section |
+| **observed** | seen in a project, neither traced nor documented | `observed` |
+
+There is no level for an assumption. What is only assumed does not go in — see
+[When a rule is missing](#when-a-rule-is-missing).
+
+**One level per section, the weakest that applies.** A statement that is weaker
+than the rest of its section carries the level inline, at its start, so that a
+single `grep` finds both forms:
+
+```markdown
+**Basis: observed** — Rector moves the icon to `Icons.php` and leaves that line
+behind.
+```
+
+**What the level changes for the reader.** Verified and documented rules are
+applied as written. An observed rule is applied too — it describes a mistake
+that did happen — but where the code at hand contradicts it, the code wins, and
+the contradiction is reported so the rule can be corrected.
+
+**What it covers.** Statements of fact: what an API does, what breaks, what an
+error says. A decision — use this set, prefer that approach — is not verified or
+observed; it is a decision, and its section states the reason instead.
+
+**Adoption.** Every new section carries the line. An existing section gets it
+when it is next changed; until then it is *unclassified*, which says nothing
+about its quality. `verified against` with a version is what makes a later
+re-check possible: after a core update, the sections verified against an older
+release are the list to go through.
+
+```bash
+grep -rnE 'Basis:(\*\*)? observed' guidelines/                # to verify
+grep -rn 'Basis:\*\* verified against TYPO3 13' guidelines/     # to re-check
+```
+
 ## General rules (apply everywhere)
 
 - Code comments and documentation: **English only**
@@ -147,6 +229,86 @@ example — gone since v14, and still the first thing a model reaches for.
 - IDE: PhpStorm
 - Shell: commands always via `ddev` (e.g. `ddev composer ...`,
   `ddev exec typo3 ...`)
+
+## Comments — where knowledge belongs
+
+A comment is the weakest place to keep knowledge: it goes stale and nothing
+fails. Put each piece of knowledge in the first place that fits:
+
+| Knowledge | Where it goes |
+|---|---|
+| What the code does | **Names** — variable, method, an extracted method, an enum instead of a magic value |
+| What must hold | **Types and tests** — they fail when it stops being true |
+| Why this change was made, what was there before | **The commit message** |
+| Why the code has to stay this way | **A comment** |
+| A decision that spans several files | The project's `Guidelines/` or `Documentation/` folder |
+| What an editor needs to know | **The backend** — see [xliff/typo3.md → Texts for editors and visitors](xliff/typo3.md#texts-for-editors-and-visitors) |
+
+**The test for every new comment: is it still true and still useful once the
+change is merged?** If not, it belongs in the commit message, or nowhere.
+
+What passes the test: a constraint the code cannot express — an order that must
+not be tidied up, see [php.md](php.md) —, a workaround with a link to the
+upstream issue, framework behaviour that surprises, a pointer to a changelog
+entry the next upgrade has to find.
+
+What does not:
+
+- A comment that says what the next line does
+- A change log inside the code: "now uses X instead of Y", "fixed: …"
+- A reference to the task or the conversation: "as requested", "per the new
+  rule"
+- A docblock that repeats the declared types
+- Section banners and commented-out code
+
+Existing comments stay — see [Core Principle](#core-principle). Remove one only
+after asking. When the code a comment describes changes, update the comment in
+the same change, or propose removing it; a stale comment is worse than none.
+
+The reason is cost: every comment is read on every visit to the file, and the
+ones that only describe the diff bury the few that explain a constraint.
+
+### No comments in files a tool rewrites
+
+**Basis:** verified against TYPO3 14.3.7 (`typo3/cms-core`)
+
+TYPO3 writes some files from an array. A comment in them disappears the next
+time someone saves in the backend, and nobody notices:
+
+- `config/system/settings.php` — `ConfigurationManager::writeLocalConfiguration()`
+  rewrites it with `ArrayUtility::arrayExport()`, keys sorted, whenever the
+  Install Tool or an extension configuration is saved
+- `config/sites/*/config.yaml` and `settings.yaml` — `SiteWriter` rewrites them
+  with `Yaml::dump()` when the site or its settings are saved in the backend
+
+The same holds for every generated file: `phpstan-baseline.neon`, lock files,
+translation files that come back from a translation service.
+
+The reason for a value in these files goes into the commit message. If it has to
+stay next to the configuration, the value moves to `config/system/additional.php`
+and the comment goes with it — the core includes that file, and nothing in the
+core calls `writeAdditionalConfiguration()`, the method that could overwrite it.
+
+## Publishing generated documents — ask first
+
+A report, a plan or an evaluation written by an assistant can end up as a file
+in the project or on an external service — an artifact, a shared page,
+anything reachable by link. Publishing it there is the step that cannot be
+taken back: a link without login cannot be withdrawn from one person, records
+no access, and leaves the content with a third party. For customer material
+that is the wrong level, see
+[git.md → No customer data in public repositories](git.md#no-customer-data-in-public-repositories).
+
+**Before a generated document is published, ask how the developer wants it:**
+
+- as a file in the project — `Documentation/`, `ToDos/`, or wherever the
+  project keeps such material, or
+- published, if their plan can restrict sharing to named people or to their
+  organisation.
+
+Ask in the conversation and wait for the answer. Until there is one, write the
+file; never publish by default. If the developer's own instructions already
+answer the question, do not ask again.
 
 ## Decision Rules
 

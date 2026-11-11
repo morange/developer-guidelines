@@ -7,6 +7,348 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.15.0] — 2026-10-09
+
+### Added
+
+- `guidelines/documentation.md` → *Reporting technical debt — classify before
+  you report* — every finding names its category: 1 blocks planned work (with
+  milestone and evidence), 2 costs repeatedly (with a measurement), 3 only
+  untidy (taken along in the next commit, not reported). Before calling
+  something debt, find out what it was for. Debt chosen on purpose belongs in
+  `Decisions.md`. A recommendation, binding for assistants
+
+### Changed
+
+- `AGENTS.md` — the routing row for `documentation.md` names technical debt and
+  the decision log
+
+## [2.14.0] — 2026-10-09
+
+### Added
+
+- `guidelines/README.md` → *Comments — where knowledge belongs* — names, types
+  and tests first, the commit message for why a change was made, a comment only
+  for why the code has to stay this way. Every new comment must still be true
+  and useful once the change is merged. No comments in files TYPO3 rewrites —
+  `settings.php`, site `config.yaml` and `settings.yaml` — or in generated files;
+  a value that needs one moves to `additional.php`
+- `guidelines/xliff/typo3.md` → *Texts for editors and visitors* — labels and
+  descriptions are short, written from the editor's side and agreed with the
+  user first; before adding a frontend label, check what the core already
+  provides; every new key is translated into each language of the site
+- `guidelines/typo3/content-blocks.md` — frontend text via
+  `{cb:languagePath()}`, translation files for every site language, and two new
+  common mistakes: hardcoded frontend text, one project's content in a label
+- `guidelines/typo3/content-blocks.md` → *Reusing fields* — how a block declares
+  a field depends on who creates the column: the core (`useExistingField`),
+  another extension (`useExistingField` plus `type`, since Content Blocks reads
+  the type only from the base TCA) or another Content Block (same `identifier`
+  and `type`, without `useExistingField`, which would leave the column uncreated)
+- `guidelines/typo3/content-blocks.md` → *Palette identifiers are global* — an
+  existing palette of the same name wins without an error, so a palette carries
+  the block's name, never `header_palette`
+- `guidelines/typo3/content-blocks.md` → *A new Collection on deploy* — the
+  first schema run can fail on the Collection's index; flush the caches and run
+  it again
+- `guidelines/shell.md` → *Scripts that run on the host and inside the DDEV
+  container* — a `ddev` command inside the container exits 0 without doing
+  anything, so a script checks `IS_DDEV_PROJECT` before looking for the `ddev`
+  binary
+- `guidelines/shell.md` → *Long-running Composer scripts under DDEV* — DDEV sets
+  `COMPOSER_PROCESS_TIMEOUT`; a script that can run longer starts with
+  `Composer\\Config::disableProcessTimeout`
+- `guidelines/shell.md` → *Remote commands* — a non-interactive ssh command
+  lacks what `~/.bashrc` puts on the `PATH` (nvm), and long-running jobs on a
+  server are started detached with `setsid nohup`
+- `guidelines/git.md` → *Body* — a list of the changes as the summary, and a
+  short paragraph below it only when the diff cannot explain why; anything
+  longer goes into `Guidelines/`, `Documentation/` or an issue
+- `guidelines/git.md` → *Importing someone else's uncommitted work* —
+  `--author` for the person who wrote it, the reason in the body when the work
+  cannot be attributed, "Import from …" instead of "Backup"
+- `guidelines/git.md` → *Git on servers* — `checkout -B` against origin instead
+  of a stale local branch, git and composer as separate commands because a
+  failing `post-checkout` hook sets the exit status of `git checkout`, and what
+  to read before discarding a dirty working tree
+- `guidelines/git.md` → *Stage named paths only* — no `git add -A`, `git add .`,
+  `git add -u` or `git commit -a`; every path is named, because bulk staging
+  takes whatever lies in the working tree. `git rm` without `--cached` deletes
+  the file from disk as well and is only run after asking
+- `guidelines/bootstrap.md` — what changes for our rules in Bootstrap 6
+  (6.0.0-alpha.1, provisional) and where to look it up: colour modes with
+  `light-dark()`, `theme-*` variant classes, component variables, type sizes,
+  class names Bootstrap takes over, JavaScript renames, responsive prefixes and
+  browser minimums. Routing row in `AGENTS.md`
+- `guidelines/scss.md` → *Bootstrap components — set their variables, not their
+  properties* — a raw property reaches the resting state only; a site-wide
+  change is a Sass variable, a change for one area a CSS variable
+- `guidelines/scss.md` → *Colour modes* — no literal colours in component rules,
+  Bootstrap's semantic variables first, own tokens declared once with
+  `light-dark()` (plus `color-scheme: light` for light subtrees on 5.3), twice
+  only where browser support rules it out
+- `guidelines/scss.md` → *Type sizes — Bootstrap's scale* — sizes from the scale
+  classes, heading level and size separate, change the step rather than one
+  element; Bootstrap 5 specifics (RFS, `.fs-1`–`.fs-6`) marked as such
+- `guidelines/scss.md` → *Which of two options is the prominent one* — the
+  selected option of a state control is the filled one
+- `guidelines/scss.md` → *Prefix system* — Bootstrap's component names are taken
+- `guidelines/typo3/deployment.md` — what a deploy and a database import have to
+  account for: `database:updateschema`, `cache:flush` and `database:updateschema`
+  again, because the first run reads the cached TCA; a flush right after a
+  dropped column; `rm -rf var/cache/*` on a major upgrade; upgrade wizards named
+  one by one and confirmed with `--confirm`, since an unconfirmed wizard can be
+  marked as executed; Composer plugins in `require`; `SYS/setMemoryLimit`
+  overriding `php.ini`; scripted data changes. Routing row in `AGENTS.md`
+- `guidelines/fluid/README.md` → *Markup outside `<f:section>`* — what a
+  template with a layout, a template without one and a partial without
+  `section` render outside every section; no `f:debug` in partials
+- `guidelines/fluid/README.md` → *Typographic quotes break attributes* —
+  `type=“button“` falls back to a submit button
+- `guidelines/fluid/README.md` → *`<f:comment>`* — an HTML comment without
+  `<f:comment>` is executed by Fluid and sent to the page
+- `guidelines/README.md` → *Publishing generated documents — ask first* — before
+  an assistant publishes a report or plan to an external service, it asks
+  whether the developer wants a file in the project or a publication their plan
+  can restrict to named people; the file is the default, and standing
+  instructions answer the question once
+- `guidelines/documentation.md` → *Decisions.md* — an optional decision log,
+  one line per decision with the option not taken and its consequence
+- `guidelines/typo3/practices/fluid-components.md` → *Conventions* — component
+  arguments are typed for what the Record API delivers (`TypolinkParameter`,
+  one `FileReference` or a collection depending on `relationship`, `DateTime`),
+  with union types in Fluid 5 and `mixed` in Fluid 4; look for an existing
+  component before writing markup, and add a new one to the project's catalogue
+  in the same commit where the project keeps one
+- `guidelines/bootstrap.md` → *Already usable on 5.3* — the techniques v6 uses
+  that work on 5.3 already: `light-dark()` tokens, `color-mix()` instead of the
+  `-rgb` variables, component variables, role-named `data-variant`, logical
+  properties, `aria-expanded`, imports, prefixed classes
+- `guidelines/bootstrap.md` → *Transparent colours* — `color-mix()` replaces
+  `rgba(var(--bs-*-rgb), …)`; v6 removes the `-rgb` variables
+- `guidelines/scss.md` → *Colour modes* — a transparent colour is mixed with
+  `color-mix()`, not built from `-rgb`
+
+### Changed
+
+- `guidelines/README.md` → *Core Principle* — a preserved comment is updated
+  when the code it describes changes
+- `guidelines/typo3/content-blocks.md` — `prefixFields: false` is there so that
+  fields can be shared between blocks; custom fields are named for their
+  meaning, not for the block; template text from editors via `{data…}`, fixed
+  text via `f:translate`
+- `AGENTS.md` — the routing row for `shell.md` names host or container and
+  long-running jobs
+- `guidelines/git.md` → *GitKraken / AI Instructions* — the commit message body
+  follows the new *Body* rule
+- `guidelines/scss.md` → *Variants and modifiers* — one mechanism per question:
+  `data-bs-theme` for the mode, `data-variant` for the form of an own
+  component, an additional class for layout, Bootstrap's own classes for the
+  palette colour. `data-variant` names a role, never a colour, and Bootstrap
+  components keep their own variant classes
+
+### Fixed
+
+- `guidelines/typo3/content-blocks.md` and the `create-content-block` skill
+  listed `icon_identifier` as a standard TYPO3 field. It comes from an
+  extension and needs `type` next to `useExistingField`. The skill now also runs
+  the schema step before checking the backend
+- `guidelines/scss.md` → *Never override Bootstrap component classes with
+  `!important`* — the example set `$btn-primary-bg`, which Bootstrap 5 does not
+  have, so it changed nothing. It now shows `$primary` for the whole site and
+  `--bs-btn-*` for one area
+- `guidelines/fluid/README.md` → *CDATA no longer comments code out* — CDATA
+  inside `<f:comment>` is harmless in v14, because the comment body is emptied
+  before parsing; a CDATA section on its own is what reaches the page. The v13
+  deprecation entry is written when a template is parsed, not on every render.
+  Points at Feature #108148 for what CDATA means in Fluid 5
+- `guidelines/tooling.md` — `fluid:analyze` without `*.fluid.*` files prints no
+  findings, which looks like a clean run; `--stdin` analyses any template
+- `guidelines/bootstrap.md` — where 5.3 can already do what v6 does, new code
+  does it the v6 way. The custom property prefix is settled: v6 writes tokens
+  unprefixed and only its dist build adds `--bs-`. Cascade layers make a raw
+  property override every state. Bootstrap's v5 → v6 migration skill is listed
+  as a source, to be fetched when a migration starts
+
+## [2.13.0] — 2026-10-08
+
+### Added
+
+- `guidelines/third-party-code.md` — carry third-party licenses through copying,
+  building and minifying, with any build tool: every notice must arrive in the
+  built file or a license file it names, checked in the output, not the
+  configuration. `/*!` as the license-comment convention, the settings that keep
+  or extract license comments in Terser, cssnano and esbuild, Terser dropping a
+  notice together with code it inlines, the header and license file for vendored
+  code, the Composer `license` field versus a README table, and no relative
+  `url()` paths in SCSS that an extension ships for `@use`
+- Pointers to it from `javascript.md`, `scss.md` and `documentation.md`, and a
+  row in the routing table
+- `guidelines/README.md` → *When a rule is missing* — where the installed source
+  cannot answer, read docs.typo3.org at the project's version, as Markdown, and
+  find the page through the manual's `llms.txt`, `toc.json` or `confvals.json`;
+  never the reStructuredText sources, which miss included and generated content.
+  Summarised in `AGENTS.md`
+- `guidelines/README.md` → *New code looks one major ahead* — new code checks
+  the next released major's index for deprecations of the APIs it uses
+  (binding) and the unreleased major's index as a tie-breaker, a practice guide
+  decides the recommended approach, and the code still runs on the installed
+  version. Summarised in `AGENTS.md`, linked from `typo3/versions.md`
+- `CLAUDE.md` — imports `AGENTS.md`, so that Claude Code loads it when working
+  inside this repository
+
+### Changed
+
+- `AGENTS.md` — holds the routing table (work area → file), the one list of
+  guideline files. `README.md` and `guidelines/README.md` point at it instead
+  of keeping their own tables, which had already drifted apart. All paths in
+  `AGENTS.md` are relative to the repository root, so that a file importing it
+  from elsewhere — a project's or a personal `CLAUDE.md` — resolves them
+- `guidelines/setup.md` — the project `CLAUDE.md` template imports
+  `../developer-guidelines/AGENTS.md` instead of carrying a copied summary of
+  *When a rule is missing*, which had missed the two newest rules. Explains the
+  one-time import approval and the fallback sentence. **Projects set up with the
+  old template keep the copy until their block is replaced.**
+- `skills/guidelines-upgrade` — fourth check: does the project `CLAUDE.md`
+  import `AGENTS.md`? `--apply --add-import` adds the line for a sibling clone;
+  lines that look copied from the shared rules are reported, never removed
+- `guidelines/typo3/changelog-index/v15.tsv` — regenerated from core `main`,
+  52 → 78 provisional entries
+- `skills/typo3-changelog-harvest` — harvests from the changelog JSON on
+  docs.typo3.org (`--docs`) instead of the GitHub directory listing
+  (`--remote`, removed). The symbol column gains the classes and members the
+  JSON lists, without losing any symbol the entry text names; new column 11
+  `migration-symbols` lists what the Migration section names, usually the
+  replacement. `--provisional` now takes the major it applies to. The local mode
+  stays for working offline
+- `guidelines/typo3/changelog-index/` — v13, v14 and v15 regenerated with
+  `--docs`; v14 gains the `Important` entries of the latest 14.3 patch releases
+- `guidelines/documentation.md` — the rule against a copyright name in the
+  License section covers the package's own copyright; the third-party table
+  names the upstream holder
+
+## [2.12.0] — 2026-10-01
+
+### Added
+
+- `guidelines/fluid/README.md` — wrap the body of `<f:comment>` in an HTML
+  comment, prose notes included. `<f:comment>` keeps the block out of Fluid's
+  output; the HTML comment makes the IDE highlight it as a comment. Without it,
+  the PhpStorm Fluid plugin treats the body as live markup and marks the tag
+
+### Changed
+
+- `guidelines/fluid/README.md` — the CDATA example keeps its HTML comment.
+  Dropping CDATA removes one of three layers: `<f:comment>` for the output,
+  CDATA against parsing (no longer needed since v13.3), the HTML comment for
+  the editor
+
+## [2.11.0] — 2026-10-01
+
+### Added
+
+- `guidelines/typo3/developer.md` — "`ext_emconf.php` — remove it once the
+  minimum is TYPO3 14.2": from 14.2 on, TYPO3 reads the extension metadata from
+  `composer.json` in classic mode too (#108345). Remove the file when 14.2 is the
+  lowest supported version; otherwise keep it and add `version` and
+  `providesPackages` to `composer.json`. Includes where each field goes and why
+  a functional test suite with `failOnDeprecation` fails on the deprecation
+- `guidelines/typo3/versions.md` — row for #108345
+
+### Changed
+
+- `guidelines/typo3/developer.md` — "Extension title comes from
+  `composer.json`": keeping `ext_emconf.php` consistent applies only while a
+  package still ships one; `ext_emconf.php` added to `applies_to`, and
+  "extension metadata" to its topics in `guidelines/README.md`
+- `guidelines/git.md` — "Release Workflow": the version goes into
+  `extra.typo3/cms.version` in `composer.json`, and into `ext_emconf.php` only
+  while the package still has one
+
+- `guidelines/git.md` — "Release Workflow": merge `develop` into `main` locally
+  with `--no-ff` instead of through a pull request; a pull request is for
+  repositories with other contributors, protected branches or CI gates. No
+  GitHub Release — the pushed tag and CHANGELOG.md are the release record
+
+## [2.10.0] — 2026-09-30
+
+### Added
+
+- `guidelines/shell.md` — "Remote commands run in the remote login shell": a
+  command passed to `ssh host "…"` runs in the target user's login shell, which
+  may be zsh (unmatched globs abort, no word splitting, `$name:x` is a
+  modifier). Pass SQL and scripts on stdin, quote arguments with `printf '%q '`,
+  or run the remote part in `bash -s`. Deployer's `run()` is not affected
+
+### Changed
+
+- `guidelines/xliff/README.md` — "Version selection" split by who uses the
+  package. A public extension never mixes XLIFF 1.2 and 2.0; it switches once v13
+  is gone from its requirements — in a minor release only if file names, paths,
+  unit ids and placeholders stay the same, `approved="no"` is carried over as
+  `state`, and no file is moved for a translation domain; otherwise in a major
+  release. A private package chooses the version per set of label files, and a
+  new set in a v14-only project starts on 2.0. Every switch converts all files of
+  a folder in one commit
+
+## [2.9.0] — 2026-09-21
+
+### Added
+
+- `guidelines/README.md` — "How a rule is backed": a `**Basis:**` line per
+  section says whether its statements are verified against a named package
+  version, documented in a changelog, or only observed in a project. Observed
+  rules yield to contradicting code; new sections carry the line, existing ones
+  get it when next changed. The v14 upgrade sections carry it already
+- `guidelines/typo3/developer.md` — "Upgrading to v14 — changes that fail
+  silently": base TCA files must `return` their array (the file name becomes the
+  table name, `$GLOBALS['TCA']` writes are discarded);
+  `ExtensionManagementUtility::addPlugin()` takes two arguments and a stale
+  `'CType'` becomes the FlexForm data structure; the fifth argument of
+  `configurePlugin()` is required in v13.4 and unused in v14; a leftover
+  `IconRegistry` in `ext_localconf.php` stops the boot; `absoluteUri: true`
+  breaks `f:image`; `errorMessage` → `message` on `RegularExpressionValidator`;
+  which Rector sets to use and what to undo after the run. Plus the "Fetch of
+  property data" ExtensionScanner false positive
+- `guidelines/fluid/README.md` — `renderStatic()` → `render()`: without
+  `getContentArgumentName()` a value passed as argument is lost silently, while
+  the inline chain keeps working
+- `guidelines/fluid/typo3.md` — global ViewHelper namespaces in
+  `Configuration/Fluid/Namespaces.php`, `typo3 fluid:namespaces`; an `xmlns` with
+  backslashes or `https` throws in Fluid 5
+- `guidelines/typo3/integrator.md` — `allowedContentTypes` /
+  `disallowedContentTypes` per backend layout column replace
+  EXT:content_defender except `maxitems`; an escaped `\/` in a TypoScript
+  `matches` pattern makes the condition throw on every evaluation
+- `guidelines/playwright.md` — a plugin spec needs a positive assertion besides
+  `expectNoError()`, on an element the plugin itself renders — not on the
+  content element frame, which the layout renders regardless
+- `guidelines/typo3/versions.md` — rows for all of the above
+- `guidelines/fluid/README.md` — a component's `default` is not cast to the
+  declared type. A passed value is, an omitted one is not: `default="false"`
+  arrives as the string `"false"`, and `!{argument}` is therefore always false.
+  `{argument}` alone is right because `convertToBoolean()` special-cases that
+  string, so the defect only shows on the negation. Holds in Fluid 4 and 5 alike
+- `guidelines/fluid/typo3.md`, `guidelines/xliff/typo3.md` — `f:translate`
+  arguments must be a list. From v14.2 `array_is_list()` decides between
+  `vsprintf` and ICU; an array starting at 1 takes the ICU branch and leaves
+  `%1$s` standing in the page. v13 ignored the keys, so this breaks silently on
+  upgrade — no exception, no deprecation
+
+### Fixed
+
+- `guidelines/typo3/developer.md` — ExtensionScanner false positives, checked
+  against the 14.3.7 scanner: the `$data` row named
+  `TypoScriptFrontendController::$data`, for which no rule exists; the match
+  comes from `GifBuilder->data` and skips `$this->data`. The `error()` row names
+  its rule, `TypoScriptParser->error()` from v10, instead of "a removed v14
+  method". The section claimed a reviewed finding cannot be silenced;
+  `@extensionScannerIgnoreLine` and `@extensionScannerIgnoreFile` do that
+- `guidelines/typo3/versions.md`, `guidelines/typo3/developer.md`,
+  `guidelines/xliff/README.md`, `guidelines/typo3/practices/record-languages.md`
+  — four changelog links pointed at file names that do not exist on
+  docs.typo3.org (#107047, #107789, #107710, #106510)
+
 ## [2.8.1] — 2026-09-16
 
 ### Changed

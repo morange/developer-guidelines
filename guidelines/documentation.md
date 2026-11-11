@@ -4,12 +4,15 @@ scope: documentation
 applies_to:
   - "**/README.md"
   - "**/CHANGELOG.md"
-see_also: ["git.md"]
+  - "**/Decisions.md"
+see_also: ["git.md", "third-party-code.md"]
 ---
 # Documentation Guidelines
 
 Standards for README.md and CHANGELOG.md in TYPO3 extensions published on
 Packagist.
+How to report technical debt, and a project's decision log where one is kept,
+are at the end.
 
 ---
 
@@ -171,7 +174,14 @@ ddev typo3 extension:setup -e ot_gallery
 GPL-2.0-or-later — see [LICENSE](LICENSE)
 ```
 
-Never inline the copyright year or author name in the License section.
+Never inline the copyright year or author name of the package in the License
+section.
+
+Third-party parts go in a table below the package license, never into the
+`license` field of `composer.json`. That table names the upstream copyright
+holder — the attribution is what the third-party license asks for, so the rule
+above does not apply to it. See
+[third-party-code.md](third-party-code.md) → *Composer `license` and the README*.
 
 ### Author section
 
@@ -253,3 +263,74 @@ Rules:
 Breaking changes must appear under `### Removed` or `### Changed` with a
 migration
 note.
+
+---
+
+## Reporting technical debt — classify before you report
+
+A recommendation for everyone. **For an assistant it is binding:** every
+finding of technical debt it reports names its category.
+
+Older projects carry structure from several eras. Some of what looks careless
+was a reasonable answer to constraints that no longer exist; some of it still
+holds weight. A finding presented as "this should be cleaner" invites a debate
+about taste. The same finding presented as "this blocks the server move" or
+"this costs minutes in every deploy" is a scheduling question — which is easier
+to answer.
+
+### Three categories
+
+| Category | Means | Report it with |
+|---|---|---|
+| **1 — blocks planned work** | something has to change before a named milestone can happen at all | the milestone, and the evidence |
+| **2 — costs repeatedly** | not blocking, but paid again on every deploy, import or investigation | a measurement — runtime per run, a wrong conclusion it caused — not an impression |
+| **3 — only untidy** | no blocker, no recurring cost | nothing — take it along in the next commit that touches the area |
+
+Categories 1 and 2 belong in a report. Category 3 belongs in the commit, without
+a discussion of its own; an assistant does not list it as a finding.
+
+Examples:
+
+- **1** — `my_extension` requires a library that does not support the PHP
+  version of the planned server. The move cannot happen until it is replaced.
+- **2** — a deploy step rebuilds every asset although only one changed, and
+  adds minutes to every release; or a log table that is never pruned makes
+  every database import measurably slower.
+- **3** — CSS classes in a stylesheet that no template uses any more.
+
+### Before calling something debt, ask what it was for
+
+A structure that looks wrong may be the answer to a constraint that still holds
+— a database view an external reporting tool reads, a field that looks
+duplicated but is still written by a partner's import. Find out what it solved
+before judging it. Read without that question, a finding costs time or removes
+something load-bearing.
+
+### Found debt and chosen debt
+
+This section is about debt you come across. Debt taken on purpose — a cheaper
+path chosen with open eyes, a recommendation not followed — is recorded where it
+was decided, see [Decisions.md](#decisionsmd--a-recommendation-not-a-requirement).
+A finding whose decision is recorded is a scheduling question; without the
+record it becomes an argument about what was agreed.
+
+---
+
+## Decisions.md — a recommendation, not a requirement
+
+Some decisions create debt on purpose: a cheaper path taken with open eyes, a
+recommendation not followed, a cleanup postponed. When the consequence turns
+up later, a recorded decision makes it a scheduling question. Without the
+record it turns into an argument about what was agreed.
+
+A project that wants this keeps a `Decisions.md` in its root. No project has to.
+Where there is one, an entry is one line, and it names the option not taken
+and the consequence it carries:
+
+```markdown
+- 2026-03-12 — Keep the legacy search for now instead of moving to Solr.
+  Consequence: no facets; the migration is planned work, not a fix.
+```
+
+The file records the decision, not the discussion — that stays in the issue or
+the commit message it came from.

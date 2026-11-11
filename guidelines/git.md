@@ -61,6 +61,15 @@ Examples:
 | `[BUGFIX]`  | Bug fix                                             |
 | `[DOCS]`    | Documentation only                                  |
 | `[!!!]`     | Breaking changes                                    |
+| `[SECURITY]`| Change fixes a security issue                       |
+
+`[!!!]` and `[SECURITY]` are flags in the TYPO3 Core rules, not types of their
+own. `[!!!]` always goes first: `[!!!][FEATURE] …`.
+`[SECURITY]` is used on its own. It marks a commit that closes a known
+vulnerability, e.g. a dependency update that fixes a published security
+advisory (TYPO3-CORE-SA, TYPO3-EXT-SA, CVE). Name the advisory in the body.
+
+Source: [TYPO3 Contribution Guide — Commit Message Rules](https://docs.typo3.org/m/typo3/guide-contributionworkflow/main/en-us/Appendix/CommitMessage.html)
 
 ### Rules:
 
@@ -69,6 +78,39 @@ Examples:
 - No period at the end of the subject line
 - Keep subject concise and specific
 - Do not mix unrelated changes in one commit
+
+### Body
+
+```
+[TYPE] Subject (max 52 chars, imperative)
+
+- What changed, one line per change
+- Short enough to take in at a glance
+
+Why, only when the diff cannot tell: the constraint, the rejected
+alternative, the symptom that led here, the version it was checked
+against. A few sentences, not a story.
+```
+
+- **The list is the summary.** One line per change, at most about five. More
+  than that is usually two commits.
+- **The paragraph is optional**, separated by a blank line. It is written only
+  when one of these would otherwise stay open:
+  - why this way and not another — the alternative that was rejected
+  - which constraint forces it
+  - what the symptom was, and how it surfaced
+  - what it was checked against — package and version
+- **Not in the paragraph:** what the diff already shows — file lists, the
+  changes retold — and the course of the session ("tried X first, then …").
+- **Longer than a short paragraph?** Then the content belongs in the project's
+  `Guidelines/` or `Documentation/` folder, or in an issue, and the commit
+  message points at it.
+
+The paragraph is where the reason for a change lives — see
+[Comments — where knowledge belongs](README.md#comments--where-knowledge-belongs).
+Few people read a long body, but whoever lands on the line through `git blame`
+or `git log -S` — a developer or an assistant — has exactly the question it
+answers.
 
 ---
 
@@ -93,6 +135,39 @@ TYPO3 conventions:
 Never add `Co-Authored-By: Claude ...` — or any other mention of AI tools — to
 commit messages or PR descriptions. This applies to **all** repositories,
 public and private alike.
+
+---
+
+## Stage named paths only
+
+**Basis:** observed
+
+Never stage in bulk. Forbidden: `git add -A`, `git add .`, `git add -u`, and
+`git commit -a` / `git commit -am`, which does the same as `git add -u` inside
+the commit. Name every path:
+
+```bash
+git add composer.json packages/my_extension/ext_localconf.php
+```
+
+Bulk staging takes whatever happens to be in the working tree. Two installer
+log files with an admin and a database password reached a remote repository
+that way, and they stay in its history. `.gitignore` is no protection — it
+only covers what someone thought of in advance.
+
+This matters most for an assistant: it knows the files it wrote, not the logs,
+dumps or copies that appeared beside them. Naming each path is the moment of
+deciding that it belongs in the commit.
+
+Before committing, `git status --short` shows what is left over, and
+`git diff --cached --stat` shows what will go in.
+
+### Removing a file from git is not deleting it
+
+`git rm <file>` and `git rm -f <file>` delete the file from disk as well. To
+take a file out of version control and keep it, use `git rm --cached <file>`.
+Removing from the index and removing from disk are two separate decisions — an
+assistant makes the first one when asked, and asks before the second.
 
 ---
 
@@ -139,6 +214,45 @@ merge commit), the only commit that legitimately lands directly on `main` is
 that merge commit. A commit on `main` carrying actual file content — not a
 merge — is almost always a mistake, regardless of the project's specific
 workflow.
+
+---
+
+## Importing someone else's uncommitted work
+
+**Basis:** documented — `git commit --author`, `git blame`
+
+Changes made outside git — directly on a server, or locally by someone who never
+committed them — have to be brought into the repository at some point. A plain
+commit gets the attribution wrong: `git blame`, `git shortlog` and every "who
+wrote this" question answer with the committer, and for imported work that
+answer stays wrong for years.
+
+Git keeps the two roles apart, so use them. The **author** is who wrote it, the
+**committer** stays whoever runs the command, and `git blame` reports the
+author:
+
+```bash
+git commit --author="Jane Doe <jane@example.com>" \
+  -m "[TASK] Import uncommitted changes from the live server"
+```
+
+When the import cannot be attributed to one person — mixed sources, or your own
+changes folded in — do not invent an author. Keep yourself as author and say it
+in the body:
+
+```
+[TASK] Import uncommitted changes from the live server
+
+Written on the server over several months, origin not separable per file.
+Committed unchanged; nothing in this commit was written by the committer.
+```
+
+Either way the subject says **Import from …**, never `Backup`. "Backup"
+describes what it felt like at the time; "Import from the live server" is what
+a reader needs six months later.
+
+Existing `Backup` commits stay as they are. Rewriting published history for this
+costs more than it returns.
 
 ---
 
@@ -234,10 +348,13 @@ Rules:
 ## Release Workflow
 
 1. Finish work on develop
-2. Update extension version in ext_emconf.php
-3. Create PR develop → main
-4. Merge via GitHub
-5. Create tag on the merge commit in `main`
+2. Update the extension version: `extra.typo3/cms.version` in `composer.json`,
+   and `ext_emconf.php` while the package still ships one (see
+   `typo3/developer.md` → *`ext_emconf.php` — remove it once the minimum is
+   TYPO3 14.2*)
+3. Merge develop into main locally: `git merge --no-ff develop`
+4. Create tag on the merge commit in `main`
+5. Push `main`, the tag, and `develop`
 
 ```bash
 git tag -a 1.2.0 -m "Release 1.2.0"
@@ -249,7 +366,11 @@ Rules:
 - Tag only on main merge commit
 - Never tag on develop
 
-Use `--no-ff` only when merging locally (GitHub PR merges are already non-fast-forward).
+No GitHub Release — the pushed tag and CHANGELOG.md are the release record.
+
+**Repositories with other contributors** — someone else's repository, a team
+repository, or one whose `main` is protected or gated by CI — merge through a
+pull request instead of step 3. A GitHub PR merge is already non-fast-forward.
 
 ## First Push on a New Repository
 
@@ -266,6 +387,52 @@ git push origin develop   # after main is established
 ```
 
 Set branch protection for `main` on GitHub afterwards.
+
+---
+
+## Git on servers
+
+A server checkout is not a development clone. It is touched rarely, by several
+people, and it collects local branches and changes that nobody remembers.
+
+### Switch branches with `checkout -B` against origin
+
+**Basis:** observed — the behaviour of `-B` is documented in `git checkout`
+
+```bash
+git fetch origin
+git checkout -B develop origin/develop
+git log -1 --oneline        # compare with the commit you expect
+```
+
+A plain `git checkout develop` takes a local `develop` if one exists, without
+looking at origin — and a server can carry local branches that are years old.
+`-B` resets the local branch to `origin/develop`. Check the commit before
+composer and the caches run.
+
+`-B` discards local commits on that branch. If the server may hold any,
+`git log origin/develop..develop` shows them first.
+
+### Run git and composer as separate commands
+
+**Basis:** observed — that the exit status of a `post-checkout` hook becomes
+the exit status of `git checkout` is documented in `githooks`
+
+Do not chain deploy steps with `&&`. A failing hook makes `git checkout` exit
+non-zero after the checkout succeeded, and everything after `&&` is skipped —
+`composer install` included — while the working tree already shows the new
+code. Run each step on its own and read its output.
+
+### Read before you change anything
+
+**Basis:** observed
+
+- **"There is no tracking information for the current branch"** means the local
+  branch has no upstream. `git fetch origin` and the `checkout -B` above avoid
+  it without changing the repository configuration.
+- **A dirty working tree** stops a deploy. Find out why a change is there before
+  discarding it — it may be the only copy of someone's work, see
+  [Importing someone else's uncommitted work](#importing-someone-elses-uncommitted-work).
 
 ---
 
@@ -326,9 +493,12 @@ CRITICAL: Never append "Co-Authored-By" or any mention of AI tools in commit mes
 TYPO3 format:
 [TYPE] Subject (max 52 chars, imperative)
 
-Body: List changes, one per line.
+Body: a list of the changes, one per line, at most about five.
+Add a short paragraph below it only when the diff cannot explain
+why: constraint, rejected alternative, symptom, version checked.
+Never restate the diff.
 
-Types: [BUGFIX], [FEATURE], [TASK], [DOCS], [!!!]
+Types: [BUGFIX], [FEATURE], [TASK], [DOCS], [!!!], [SECURITY]
 
 Example:
 [FEATURE] Add FAL support for user avatars
